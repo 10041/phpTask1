@@ -8,7 +8,7 @@
 
 class FormatPackagesException extends \Exception {}
 
-class CycleDependencieException extends \Exception {}
+class CycleDependencyException extends \Exception {}
 
 /**
  * @param array $packages
@@ -55,6 +55,31 @@ function checkDependencies(array $packages): void{
     }
 }
 
+
+/**
+ * @param array $packages
+ * @param array $usedDependencies
+ * @throws CycleDependencyException
+ *
+ * @return void
+ */
+function checkCycleDependencies(array $packages, array $usedDependencies): void{
+    foreach ($packages as $key => $value){
+        if(!empty($value['dependencies'])){
+            if(in_array($value['name'], $usedDependencies)){
+                throw new CycleDependencyException("Cycle dependency ".$value['name']);
+            }
+            array_push($usedDependencies, $value['name']);
+            foreach ($value['dependencies'] as $dependency){
+                if(in_array($dependency, $usedDependencies)){
+                    throw new CycleDependencyException("Cycle dependency ".$dependency);
+                }
+                checkCycleDependencies($packages[$dependency], $usedDependencies);
+            }
+        }
+    }
+}
+
 function validatePackageDefinitions(array $packages): void{
 
 }
@@ -75,7 +100,7 @@ $packages = [
     ],
     'C' => [
         'name' => 'C',
-        'dependencies' => ['B', 'D'],
+        'dependencies' => ['B', 'D', 'C'],
     ],
     'D' => [
         'name' => 'D',
@@ -84,11 +109,11 @@ $packages = [
 ];
 
 try{
-    print_r(checkDependencies($packages)."\n");
+    print_r(checkCycleDependencies($packages, [])."\n");
 }
 catch (FormatPackagesException $e){
     print_r($e->getMessage()."\n");
 }
-catch (CycleDependencieException $e){
+catch (CycleDependencyException $e){
     print_r($e->getMessage()."\n");
 }
