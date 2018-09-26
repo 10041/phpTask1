@@ -12,7 +12,7 @@ $packages = [
         'dependencies' => ['B', 'C'],
     ],
     'B' => [
-        'name' => 'B',
+        'name' => 'A',
         'dependencies' => [],
     ],
     'C' => [
@@ -30,9 +30,15 @@ class FormatPackagesException extends \Exception {}
 
 class CycleDependencieException extends \Exception {}
 
-function checkPackagesName(array $packages): boolean{
-
+function checkPackagesName(array $packages): bool{
+    foreach ($packages as $key=>$value){
+        if($key !== $value['name']){
+            return FALSE;
+        }
+    }
+    return TRUE;
 }
+
 
 function validatePackageDefinitions(array $packages): void{
 
@@ -43,7 +49,7 @@ function getAllPackageDependencies(array $packages, string $packageName): array{
 }
 
 try{
-    throw new CycleDependencieException('aaaaaaaa');
+    print_r(checkPackagesName($packages)."\n");
 }
 catch (FormatPackagesException $e){
     print_r($e->getMessage()."\n");
