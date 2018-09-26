@@ -12,6 +12,7 @@ class CycleDependencyException extends \Exception {}
 
 /**
  * @param array $packages
+ *
  * @throws FormatPackagesException
  *
  * @return void
@@ -26,6 +27,7 @@ function checkPackagesName(array $packages): void{
 
 /**
  * @param array $packages
+ *
  * @throws FormatPackagesException
  *
  * @return void
@@ -41,6 +43,7 @@ function checkDependenciesKey(array $packages): void{
 
 /**
  * @param array $packages
+ *
  * @throws FormatPackagesException
  *
  * @return void
@@ -59,6 +62,7 @@ function checkDependencies(array $packages): void{
 /**
  * @param array $packages
  * @param array $usedDependencies
+ *
  * @throws CycleDependencyException
  *
  * @return void
@@ -80,10 +84,27 @@ function checkCycleDependencies(array $packages, array $usedDependencies): void{
     }
 }
 
+/**
+ * @param array $packages
+ *
+ * @throws CycleDependencyException
+ * @throws FormatPackagesException
+ *
+ * @return void
+ */
 function validatePackageDefinitions(array $packages): void{
-
+    checkPackagesName($packages);
+    checkDependenciesKey($packages);
+    checkDependencies($packages);
+    checkCycleDependencies($packages, []);
 }
 
+/**
+ * @param array $packages
+ * @param string $packageName
+ *
+ * @return array
+ */
 function getAllPackageDependencies(array $packages, string $packageName): array{
 
 }
@@ -100,7 +121,7 @@ $packages = [
     ],
     'C' => [
         'name' => 'C',
-        'dependencies' => ['B', 'D', 'C'],
+        'dependencies' => ['B', 'D'],
     ],
     'D' => [
         'name' => 'D',
@@ -109,7 +130,7 @@ $packages = [
 ];
 
 try{
-    print_r(checkCycleDependencies($packages, [])."\n");
+    validatePackageDefinitions($packages);
 }
 catch (FormatPackagesException $e){
     print_r($e->getMessage()."\n");
