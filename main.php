@@ -5,17 +5,19 @@
  * Date: 25.09.18
  * Time: 22:27
  */
+class PackagesException extends \Exception {}
 
-class FormatPackagesException extends \Exception {}
+class FormatPackagesException extends PackagesException {}
 
-class CycleDependencyException extends \Exception {}
+class CycleDependencyException extends PackagesException {}
+
 
 /**
  * @param array $packages
  *
- * @throws FormatPackagesException
- *
  * @return void
+ *
+ * @throws FormatPackagesException
  */
 function checkPackagesName(array $packages): void{
     foreach ($packages as $key=>$value){
@@ -25,12 +27,13 @@ function checkPackagesName(array $packages): void{
     }
 }
 
+
 /**
  * @param array $packages
  *
- * @throws FormatPackagesException
- *
  * @return void
+ *
+ * @throws FormatPackagesException
  */
 function checkDependenciesKey(array $packages): void{
     foreach ($packages as $key=>$value){
@@ -44,9 +47,9 @@ function checkDependenciesKey(array $packages): void{
 /**
  * @param array $packages
  *
- * @throws FormatPackagesException
- *
  * @return void
+ *
+ * @throws FormatPackagesException
  */
 function checkDependencies(array $packages): void{
     foreach ($packages as $key=>$value){
@@ -63,9 +66,9 @@ function checkDependencies(array $packages): void{
  * @param array $packages
  * @param array $usedDependencies
  *
- * @throws CycleDependencyException
- *
  * @return void
+ *
+ * @throws CycleDependencyException
  */
 function checkCycleDependencies(array $packages, array $usedDependencies): void{
     foreach ($packages as $key => $value){
@@ -84,13 +87,14 @@ function checkCycleDependencies(array $packages, array $usedDependencies): void{
     }
 }
 
+
 /**
  * @param array $packages
  *
+ * @return void
+ *
  * @throws CycleDependencyException
  * @throws FormatPackagesException
- *
- * @return void
  */
 function validatePackageDefinitions(array $packages): void{
     checkPackagesName($packages);
@@ -99,16 +103,49 @@ function validatePackageDefinitions(array $packages): void{
     checkCycleDependencies($packages, []);
 }
 
+
 /**
  * @param array $packages
  * @param string $packageName
  *
  * @return array
  */
-function getAllPackageDependencies(array $packages, string $packageName): array{
+function getArrayDependencies(array $packages, string $packageName): array{
+    $PackageDependencies = [$packageName];
 
+    foreach ($packages[$packageName]['dependencies'] as $package){
+        if(!empty($package)){
+            array_push($PackageDependencies, getArrayDependencies($packages, $package));
+        }
+    }
+    return $PackageDependencies;
 }
 
+/**
+ * @param array $depArray
+ *
+ * @return array
+ */
+function convertToOneDimensionalArray(array $depArray): array{
+    $iterator = new RecursiveIteratorIterator(new RecursiveArrayIterator($depArray));
+    return iterator_to_array($iterator, false);
+}
+
+/**
+ * @param array $packages
+ * @param string $packageName
+ *
+ * @return array
+ *
+ * @throws CycleDependencyException
+ * @throws FormatPackagesException
+ */
+function getAllPackageDependencies(array $packages, string $packageName): array{
+    validatePackageDefinitions($packages);
+    $arrayDependencies = convertToOneDimensionalArray(getArrayDependencies($packages, $packageName));
+    array_shift($arrayDependencies);
+    return array_unique($arrayDependencies);
+}
 
 $packages = [
     'A' => [
@@ -126,15 +163,12 @@ $packages = [
     'D' => [
         'name' => 'D',
         'dependencies' => [],
-    ],
+    ]
 ];
 
 try{
-    validatePackageDefinitions($packages);
+    var_dump(getAllPackageDependencies($packages, 'A'));
 }
-catch (FormatPackagesException $e){
-    print_r($e->getMessage()."\n");
-}
-catch (CycleDependencyException $e){
+catch (PackagesException $e){
     print_r($e->getMessage()."\n");
 }
